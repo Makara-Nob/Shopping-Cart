@@ -1,6 +1,6 @@
 package com.Myproject.ShoppingCart.Service.User;
 
-import com.Myproject.ShoppingCart.Exception.ResourceNotFOundException;
+import com.Myproject.ShoppingCart.Exception.ResourceNotFoundException;
 import com.Myproject.ShoppingCart.Models.User;
 import com.Myproject.ShoppingCart.Repository.UserRepository;
 import com.Myproject.ShoppingCart.Request.CreateUserRequest;
@@ -25,22 +25,25 @@ public class UserService implements IUserService {
     @Override
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(()->new ResourceNotFOundException("User not found."));
+                .orElseThrow(()->new ResourceNotFoundException("User not found."));
     }
 
     @Override
     public User createUser(CreateUserRequest request) {
-        return Optional.of(request)
-                .filter(user -> userRepository.existsByEmail(request.getEmail()))
-                .map(req -> {
-                    User user = new User();
-                    user.setFirst_name(request.getFirst_name());
-                    user.setLast_name(request.getLast_name());
-                    user.setEmail(request.getEmail());
-                    user.setPassword(passwordEncoder.encode(request.getPassword()));
-                    return userRepository.save(user);
-                }).orElseThrow(()->new ResourceNotFOundException(request.getEmail() + " already exist!"));
+        // Check if the email already exists, and throw an exception if it does.
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ResourceNotFoundException(request.getEmail() + " already exists!");
+        }
+        // Create and save the new user if the email does not exist.
+        User user = new User();
+        user.setFirst_name(request.getFirst_name());
+        user.setLast_name(request.getLast_name());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        return userRepository.save(user);
     }
+
 
     @Override
     public User updateUser(UpdateUserRequest request, Long userId) {
@@ -48,13 +51,13 @@ public class UserService implements IUserService {
             existingUser.setFirst_name(request.getFirst_name());
             existingUser.setLast_name(request.getLast_name());
             return userRepository.save(existingUser);
-        }).orElseThrow(()-> new ResourceNotFOundException("User not found."));
+        }).orElseThrow(()-> new ResourceNotFoundException("User not found."));
     }
 
     @Override
     public void deleteUser(Long userId) {
         userRepository.findById(userId).ifPresentOrElse(userRepository::delete, ()->{
-            throw new ResourceNotFOundException("User not found");
+            throw new ResourceNotFoundException("User not found");
         });
     }
 

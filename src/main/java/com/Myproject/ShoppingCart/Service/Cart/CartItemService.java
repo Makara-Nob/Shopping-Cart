@@ -1,13 +1,15 @@
 package com.Myproject.ShoppingCart.Service.Cart;
 
-import com.Myproject.ShoppingCart.Exception.ResourceNotFOundException;
+import com.Myproject.ShoppingCart.Exception.ResourceNotFoundException;
 import com.Myproject.ShoppingCart.Models.Cart;
 import com.Myproject.ShoppingCart.Models.CartItem;
 import com.Myproject.ShoppingCart.Models.Product;
 import com.Myproject.ShoppingCart.Repository.CartItemRepository;
 import com.Myproject.ShoppingCart.Repository.CartRepository;
 import com.Myproject.ShoppingCart.Service.product.IProductService;
+import com.Myproject.ShoppingCart.dto.ProductDto;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class CartItemService implements ICartItemService{
     private final CartRepository cartRepository;
     private final IProductService iProductService;
     private final CartService cartService;
+    private final ModelMapper mapper;
     private final Logger logger = LoggerFactory.getLogger(CartItemService.class);
 
     @Override
@@ -32,7 +35,7 @@ public class CartItemService implements ICartItemService{
         //5. if NO then initiate a new cartItem entry
         logger.info("Executing: " + getClass() + ", Input: " + cartId + ", " + productId + ", " + quantity);
         Cart cart = cartService.getCart(cartId);
-        Product product = iProductService.getProductById(productId);
+        ProductDto product = iProductService.getProductById(productId);
 
         CartItem cartItem = cart.getItems()
                 .stream()
@@ -41,7 +44,7 @@ public class CartItemService implements ICartItemService{
         if(cartItem.getId() == null)
         {
             cartItem.setCart(cart);
-            cartItem.setProduct(product);
+            cartItem.setProduct(mapper.map(product,Product.class));
             cartItem.setQuantity(quantity);
             cartItem.setUnitPrice(product.getPrice());
         } else {
@@ -90,7 +93,7 @@ public class CartItemService implements ICartItemService{
                 .stream()
                 .filter(item -> item.getProduct().getId() == productId)
                 .findFirst()
-                .orElseThrow(()->new ResourceNotFOundException("Item not found!"));
+                .orElseThrow(()->new ResourceNotFoundException("Item not found!"));
     }
 
 

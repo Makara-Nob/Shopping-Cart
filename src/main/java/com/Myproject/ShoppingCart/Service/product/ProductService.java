@@ -1,29 +1,37 @@
 package com.Myproject.ShoppingCart.Service.product;
 
-import com.Myproject.ShoppingCart.Exception.AlreadyExistsException;
 import com.Myproject.ShoppingCart.Exception.ProductNotFoundException;
-import com.Myproject.ShoppingCart.Exception.ResourceNotFOundException;
+import com.Myproject.ShoppingCart.Filter.ProductFilter;
+import com.Myproject.ShoppingCart.Filter.ProductSpec;
 import com.Myproject.ShoppingCart.Models.Category;
 import com.Myproject.ShoppingCart.Models.Image;
 import com.Myproject.ShoppingCart.Models.Product;
+import com.Myproject.ShoppingCart.Pagination.ProductResponse;
 import com.Myproject.ShoppingCart.Repository.CategoryRepository;
 import com.Myproject.ShoppingCart.Repository.ImageRepository;
 import com.Myproject.ShoppingCart.Repository.ProductRepository;
 import com.Myproject.ShoppingCart.Request.AddProductRequest;
 import com.Myproject.ShoppingCart.Request.ProductUpdateRequest;
+import com.Myproject.ShoppingCart.Validation.ProductValidator;
 import com.Myproject.ShoppingCart.dto.ImageDto;
+import com.Myproject.ShoppingCart.dto.PageDto;
 import com.Myproject.ShoppingCart.dto.ProductDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
 public class ProductService implements IProductService{
-
+    private final ProductValidator validator;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
@@ -31,12 +39,7 @@ public class ProductService implements IProductService{
 
     @Override
     public Product addProduct(AddProductRequest request) {
-
-        if (existingProduct(request.getName(), request.getBrand()))
-        {
-            throw new AlreadyExistsException("Product name: " + request.getName() + ", Brand: " + request.getBrand() + " already exist.");
-        }
-
+        validator.ValidateProductAlreadyExist(request.getBrand(),request.getName());
         Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
                 .orElseGet(()-> {
                     Category newCategory = new Category(request.getCategory().getName());
@@ -46,9 +49,34 @@ public class ProductService implements IProductService{
         return productRepository.save(createProduct(request,category));
     }
 
-    private boolean existingProduct(String name, String brand) {
-        return productRepository.existsByNameAndBrand(name,brand);
+    @Override
+    public ProductResponse getAllProduct(Map<String,String> params) {
+
+        ProductFilter productFilter = ProductFilter.buildProductFilter(params);
+        Pageable pageable = PageDto.buildPageable(params);
+
+        ProductSpec productSpec = new ProductSpec(productFilter);
+        //Retrieve a page of products
+        Page<Product> productPage = productRepository.findAll(productSpec, pageable);
+        //convert it to Dto 
+        List<ProductDto> content = productPage.stream()
+                .map(product -> modelMapper.map(product,ProductDto.class))
+                .collect(Collectors.toList());
+
+        return getProductResponse(content, productPage);
     }
+
+    private static ProductResponse getProductResponse(List<ProductDto> content, Page<Product> products) {
+        ProductResponse productResponse = new ProductResponse();
+        productResponse.setContent(content);
+        productResponse.setPageNo(products.getNumber());
+        productResponse.setPageSize(products.getSize());
+        productResponse.setTotalPages(products.getTotalPages());
+        productResponse.setTotalElements(products.getTotalElements());
+        productResponse.setLast(products.isLast());
+        return productResponse;
+    }
+
 
     private Product createProduct(AddProductRequest request, Category category) {
             return new Product(
@@ -62,17 +90,19 @@ public class ProductService implements IProductService{
     }
 
     @Override
-    public Product getProductById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFOundException("Product not found!"));
+    public ProductDto getProductById(Long id) {
+         Product product = productRepository.findById(id)
+                .orElseThrow(()-> new ProductNotFoundException("Product not found!"));
+         return convertToDto(product);
     }
 
     @Override
-    public Product updateProduct(ProductUpdateRequest request, Long productId) {
-            return productRepository.findById(productId)
+    public ProductDto updateProduct(ProductUpdateRequest request, Long productId) {
+            Product product = productRepository.findById(productId)
                     .map(existingProduct -> updateExistingProduct(existingProduct,request))
                     .map(productRepository::save)
                     .orElseThrow(()->new ProductNotFoundException("Product not found!"));
+        return convertToDto(product);
     }
 
     private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest request) {
@@ -86,40 +116,11 @@ public class ProductService implements IProductService{
         existingProduct.setCategory(category);
         return existingProduct;
     }
+
     @Override
     public void deleteProduct(Long id) {
-        productRepository.findById(id).ifPresentOrElse(productRepository::delete,
-                ()-> {throw new ProductNotFoundException("Product not found!");});
-    }
-
-    @Override
-    public List<Product> getAllProduct() {
-        return productRepository.findAll();
-    }
-
-    @Override
-    public List<Product> getProductByCategory(String categoryName) {
-        return productRepository.findByCategoryName(categoryName);
-    }
-
-    @Override
-    public List<Product> getProductByBrand(String brand) {
-        return productRepository.findByBrand(brand);
-    }
-
-    @Override
-    public List<Product> getProductByCategoryAndBrand(String category, String brand) {
-        return productRepository.findByCategoryNameAndBrand(category,brand);
-    }
-
-    @Override
-    public List<Product> getProductByName(String name) {
-        return productRepository.findByName(name);
-    }
-
-    @Override
-    public List<Product> getProductByBrandAndName(String brand, String name) {
-        return productRepository.findByBrandAndName(brand,name);
+        validator.ValidateProductNotFound(id);
+        productRepository.deleteById(id);
     }
 
     @Override
@@ -131,6 +132,7 @@ public class ProductService implements IProductService{
     public List<ProductDto> convertedProducts(List<Product> products) {
         return products.stream().map(this::convertToDto).toList();
     }
+
     @Override
     public ProductDto convertToDto(Product product) {
         ProductDto productDto = modelMapper.map(product,ProductDto.class);

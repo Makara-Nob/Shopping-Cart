@@ -1,11 +1,9 @@
 package com.Myproject.ShoppingCart.Service.Order;
 
 import com.Myproject.ShoppingCart.Enum.OrderStatus;
-import com.Myproject.ShoppingCart.Exception.ResourceNotFOundException;
-import com.Myproject.ShoppingCart.Models.Cart;
-import com.Myproject.ShoppingCart.Models.Order;
-import com.Myproject.ShoppingCart.Models.OrderItem;
-import com.Myproject.ShoppingCart.Models.Product;
+import com.Myproject.ShoppingCart.Exception.ResourceNotFoundException;
+import com.Myproject.ShoppingCart.Models.*;
+import com.Myproject.ShoppingCart.Repository.AddressRepository;
 import com.Myproject.ShoppingCart.Repository.OrderRepository;
 import com.Myproject.ShoppingCart.Repository.ProductRepository;
 import com.Myproject.ShoppingCart.Service.Cart.ICartService;
@@ -14,9 +12,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,30 +25,32 @@ public class OrderService implements IOrderService {
     private final ProductRepository productRepository;
     private final ICartService cartService;
     private final ModelMapper modelMapper;
+    private final AddressRepository addressRepository;
 
     @Transactional
     @Override
-    public Order placeOrder(Long userId) {
+    public OrderDto placeOrder(Long userId, Long addressId) throws NoSuchAlgorithmException {
         Cart cart = cartService.getCartByUserId(userId);
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
 
         Order order = createOrder(cart);
-        List<OrderItem> orderItemList = createOrderItem(order,cart);
-
+        List<OrderItem> orderItemList = createOrderItem(order, cart);
 
         order.setOrderItems(new HashSet<>(orderItemList));
+        order.setShippingAddress(address);
         order.setTotalAmount(calculateTotalAmount(orderItemList));
+        order.setOrderDate(LocalDateTime.now());
         Order savedOrder = orderRepository.save(order);
 
         cartService.clearCart(cart.getId());
-
-        return savedOrder;
+        return convertToDto(savedOrder);
     }
 
     private Order createOrder(Cart cart) {
         Order order = new Order();
         order.setUser(cart.getUser());
         order.setOrderStatus(OrderStatus.PENDING);
-        order.setOrderDate(LocalDate.now());
         return order;
     }
 
@@ -81,7 +81,7 @@ public class OrderService implements IOrderService {
         return orderRepository
                 .findById(orderId)
                 .map(this::convertToDto)
-                .orElseThrow(()->new ResourceNotFOundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
     }
 
     @Override
@@ -92,6 +92,7 @@ public class OrderService implements IOrderService {
 
     @Override
     public OrderDto convertToDto(Order order) {
-        return modelMapper.map(order,OrderDto.class);
+        OrderDto orderDto = modelMapper.map(order, OrderDto.class);
+        return orderDto;
     }
 }

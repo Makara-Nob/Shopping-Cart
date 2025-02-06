@@ -15,4 +15,10 @@ public class GlobalExceptionHandler {
       String message = "You don't have permission to perform this action!";
       return new ResponseEntity<>(message, HttpStatus.FORBIDDEN);
     }
+
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity<String> handleAlreadyExistException(AlreadyExistsException e) {
+        String message = " ALready exist!";
+        return new ResponseEntity<>(message, HttpStatus.FORBIDDEN);
+    }
 }
