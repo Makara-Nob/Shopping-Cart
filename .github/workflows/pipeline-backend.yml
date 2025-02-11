@@ -76,7 +76,7 @@ jobs:
         uses: actions/setup-java@4.7.0
         with:
           java-version: 21
-          distribution: 'eclipse-temurin'
+          distribution: 'temurin'
       - name: Extract project version
         id: extract_version
         run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
