@@ -25,7 +25,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@4.7.0
         with:
-          java-version: 21
+          java-version: '21'
           distribution: 'temurin'
       - name: Compile project
         run: mvn clean compile
@@ -41,7 +41,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@4.7.0
         with:
-          java-version: 21
+          java-version: '21'
           distribution: 'temurin'
       - name: Running unit tests
         run: mvn clean test
@@ -58,7 +58,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@4.7.0
         with:
-          java-version: 21
+          java-version: '21'
           distribution: 'temurin'
       - name: Build project
         run: mvn clean package
@@ -75,7 +75,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@4.7.0
         with:
-          java-version: 21
+          java-version: '21'
           distribution: 'temurin'
       - name: Extract project version
         id: extract_version

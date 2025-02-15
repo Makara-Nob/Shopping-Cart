@@ -1,5 +1,5 @@
 # Build stage
-FROM maven:3.9.9-eclipse-temurin-21 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
 WORKDIR /build
 
@@ -17,7 +17,7 @@ ARG APP_VERSION=1.0.0
 
 WORKDIR /app
 
-COPY --from=build /build/target/shopping-cart-*.jar /app/
+COPY --from=builder /build/target/shopping-cart-*.jar /app/
 
 # Set environment variables with defaults or from ARG
 ENV ACTIVE_PROFILE=${PROFILE}
