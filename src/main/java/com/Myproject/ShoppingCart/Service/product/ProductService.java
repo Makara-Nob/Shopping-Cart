@@ -19,9 +19,7 @@ import com.Myproject.ShoppingCart.dto.ProductDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
@@ -119,18 +117,12 @@ public class ProductService implements IProductService{
 
     @Override
     public void deleteProduct(Long id) {
-        validator.ValidateProductNotFound(id);
         productRepository.deleteById(id);
     }
 
     @Override
     public Long countProductByBrandAndName(String brand, String name) {
         return productRepository.countByBrandAndName(brand,name);
-    }
-
-    @Override
-    public List<ProductDto> convertedProducts(List<Product> products) {
-        return products.stream().map(this::convertToDto).toList();
     }
 
     @Override

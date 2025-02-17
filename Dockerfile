@@ -22,8 +22,6 @@ COPY --from=builder /build/target/shopping-cart-*.jar /app/
 # Set environment variables with defaults or from ARG
 ENV ACTIVE_PROFILE=${PROFILE}
 ENV JAR_VERSION=${APP_VERSION}
-ENV DOCKERHUB_USERNAME=DOCKERHUB_NAME
-ENV DOCKERHUB_TOKEN=DOCKERHUB_TOKEN_SECRET
 
 EXPOSE 5000
 
