@@ -1,0 +1,61 @@
+
+services:
+  spc-api:
+    container_name: spc-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+      USERNAME: ${POSTGRES_USER}
+      PASSWORD: ${POSTGRES_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - Postgres-DB
+    networks:
+      - shoppingcart-networks
+    restart: unless-stopped
+
+  Postgres-DB:
+    image: postgres
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    networks:
+      - shoppingcart-networks
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS}
+    networks:
+      - shoppingcart-networks
+    depends_on:
+      - Postgres-DB
+    restart: unless-stopped
+
+networks:
+  shoppingcart-networks:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
