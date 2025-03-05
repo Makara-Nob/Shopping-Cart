@@ -13,11 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import javax.sql.rowset.serial.SerialBlob;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +25,7 @@ public class ImageService implements IImageService {
     private final ImageRepository imageRepository;
     private final IProductService iProductService;
     private final ModelMapper mapper;
+    private final CloudinaryService cloudinaryService;
     private final Logger logger = LoggerFactory.getLogger(ImageService.class);
 
     @Override
@@ -35,10 +35,10 @@ public class ImageService implements IImageService {
     }
 
     @Override
-    public void deleteImage(Long id) {
-            imageRepository.findById(id).ifPresentOrElse(imageRepository::delete, ()-> {
-                throw new ResourceNotFoundException("No image found with id " + id);
-            });
+    public void deleteImage(Long id) throws IOException {
+            Image image = getImageById(id);
+            cloudinaryService.deleteImage(image.getPublicId());
+            imageRepository.delete(image);
     }
 
     public List<ImageDto> saveImage(List<MultipartFile> files, Long productId) {
@@ -48,27 +48,26 @@ public class ImageService implements IImageService {
 
         for (MultipartFile file : files) {
             try {
-                Image image = new Image();
-                image.setFileName(file.getOriginalFilename());
-                image.setFileType(file.getContentType());
-                image.setImage(new SerialBlob(file.getBytes()));
-                image.setProduct(mapper.map(product,Product.class));
+                Map<String,String> uploadResult = cloudinaryService.uploadImage(file);
+                String imageUrl = uploadResult.get("secure_url");
+                String publicId = uploadResult.get("public_id");
 
-                String buildDownloadUrl = "/api/v1/images/image/download/";
+                Image image = Image.builder()
+                        .fileName(file.getOriginalFilename())
+                        .fileType(file.getContentType())
+                        .downloadUrl(imageUrl)
+                        .publicId(publicId)
+                        .product(mapper.map(product,Product.class))
+                        .build();
 
-                String downloadUrl = buildDownloadUrl + image.getId();
-                image.setDownloadUrl(downloadUrl);
                 Image savedImage = imageRepository.save(image);
 
-                savedImage.setDownloadUrl(buildDownloadUrl + savedImage.getId());
-                imageRepository.save(savedImage);
-
                 ImageDto imageDto = new ImageDto();
-                imageDto.setImageId(savedImage.getId());
                 imageDto.setImageName(savedImage.getFileName());
                 imageDto.setDownloadUrl(savedImage.getDownloadUrl());
+                imageDto.setPublicId(savedImage.getPublicId());
                 savedImageDto.add(imageDto);
-            } catch (IOException | SQLException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e.getMessage());
             }
         }
@@ -80,16 +79,21 @@ public class ImageService implements IImageService {
         Image image = getImageById(imageId);
         try {
             if(image != null ){
+                cloudinaryService.deleteImage(image.getPublicId());
+                Map<String,String> imageResult = cloudinaryService.uploadImage(file);
+                String imageUrl = imageResult.get("secure_url");
                 image.setFileName(file.getOriginalFilename());
-                image.setFileName(file.getOriginalFilename());
-                image.setImage(new SerialBlob(file.getBytes()));
+                image.setDownloadUrl(imageUrl);
                 imageRepository.save(image);
             }
-        } catch (IOException | SQLException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Error updating image: " + e.getMessage(), e);
         }
     }
 
-
-
+    @Override
+    public String fetchImageUrl(Long id) {
+        Image image = getImageById(id);
+        return image.getDownloadUrl();
+    }
 }

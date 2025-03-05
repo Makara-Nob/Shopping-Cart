@@ -1,25 +1,23 @@
 package com.Myproject.ShoppingCart.Models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.*;
 import java.math.BigDecimal;
 import java.util.List;
-
 
 @Getter
 @Setter
 @NoArgsConstructor
+@Builder
 @Entity
+@AllArgsConstructor
 @Table(name = "tbProduct")
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     private String name;
     private String brand;
     private BigDecimal price;
@@ -33,12 +31,13 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
 
-    public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {
+    public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category, List<Image> images) {
         this.name = name;
         this.brand = brand;
         this.price = price;
         this.inventory = inventory;
         this.description = description;
         this.category = category;
+        this.images = images;
     }
 }

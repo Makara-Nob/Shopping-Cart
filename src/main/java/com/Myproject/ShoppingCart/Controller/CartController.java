@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("carts")
+@RequestMapping("cart")
 public class CartController {
     private final CartService cartService;
 

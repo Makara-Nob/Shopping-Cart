@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: ShoppingCart
+  profiles:
+    active: dev
+
+  datasource:
+    username: ${USERNAME}
+    password: ${PASSWORD}
+    url: ${POSTGRES_URL}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      auto-commit: false
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+
+server:
+  port: 5000
+  servlet:
+    context-path: /api/v1/
+
+jwt:
+  secret: ${JWT_SECRET}
+  expirationInMillisecond:
+    accessToken: 900000
+    refreshToken: 604800000
+cloudinary:
+  cloud-name: dqo1tyycc
+  api-key: 747579694573654
+  api-secret: dYVh3Fy11ElqiGbXSEIycQL9AIk

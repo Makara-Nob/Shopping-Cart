@@ -1,13 +1,16 @@
 package com.Myproject.ShoppingCart.Response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JwtResponse {
+@Builder
+public class AuthenticationResponse {
     private Long id;
-    private String token;
+    private String name;
+    private String access_token;
 }
