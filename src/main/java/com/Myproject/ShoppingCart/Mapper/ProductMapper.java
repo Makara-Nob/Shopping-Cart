@@ -13,4 +13,8 @@ public interface ProductMapper {
     @Mapping(source = "images",target = "images")
     ProductDto productToDto(Product product);
     List<ProductDto> productListToDtoList(List<Product> products);
+
+    @Mapping(source = "productId", target = "id")
+    @Mapping(source = "images",target = "images")
+    Product productDtoToEntity(ProductDto product);
 }

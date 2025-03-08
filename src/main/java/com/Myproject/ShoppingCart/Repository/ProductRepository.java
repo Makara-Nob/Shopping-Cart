@@ -12,8 +12,6 @@ import java.util.List;
 @NonNullApi
 public interface ProductRepository extends JpaRepository<Product,Long>, JpaSpecificationExecutor<Product> {
     boolean existsById(Long id);
-
     Long countByBrandAndName(String brand, String name);
-
     boolean existsByNameAndBrand(String name, String brand);
 }

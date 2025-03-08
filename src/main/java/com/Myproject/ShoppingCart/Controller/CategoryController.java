@@ -32,12 +32,6 @@ public class CategoryController {
             return ResponseEntity.ok(theCategory);
     }
 
-    @GetMapping("/{parentId}")
-    public ResponseEntity<?> getSubCategories(@PathVariable Long parentId) {
-            List<CategoryDto> subCategories = iCategoryService.getSubCategories(parentId);
-            return ResponseEntity.ok(subCategories);
-    }
-
     @PutMapping("/{categoryId}")
     public ResponseEntity<?> updateCategory(@PathVariable Long categoryId, @RequestBody CategoryDto category) {
                 iCategoryService.updateCategory(category, categoryId);

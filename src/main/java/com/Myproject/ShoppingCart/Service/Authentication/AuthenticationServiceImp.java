@@ -9,6 +9,7 @@ import com.Myproject.ShoppingCart.Response.AuthenticationResponse;
 import com.Myproject.ShoppingCart.Security.JWT.JwtUtils;
 import com.Myproject.ShoppingCart.Security.User.UserDetail;
 import com.Myproject.ShoppingCart.Security.User.UserDetailService;
+import com.Myproject.ShoppingCart.Service.Cart.CartService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ public class AuthenticationServiceImp implements AuthenticationService {
     private final UserDetailService userDetailService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CartService cartService;
 
     @Override
     public AuthenticationResponse login(LoginRequest request,HttpServletResponse response) {
@@ -63,6 +65,7 @@ public class AuthenticationServiceImp implements AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
+        cartService.initializeNewCart(user);
 
         // Authenticate the user immediately after registration
         Authentication authentication = authenticationManager

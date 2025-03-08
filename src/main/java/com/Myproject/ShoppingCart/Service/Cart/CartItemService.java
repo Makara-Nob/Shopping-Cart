@@ -1,6 +1,7 @@
 package com.Myproject.ShoppingCart.Service.Cart;
 
 import com.Myproject.ShoppingCart.Exception.ResourceNotFoundException;
+import com.Myproject.ShoppingCart.Mapper.ProductMapper;
 import com.Myproject.ShoppingCart.Models.Cart;
 import com.Myproject.ShoppingCart.Models.CartItem;
 import com.Myproject.ShoppingCart.Models.Product;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class CartItemService implements ICartItemService{
     private final IProductService iProductService;
     private final CartService cartService;
     private final ModelMapper mapper;
+    private final ProductMapper productMapper;
     private final Logger logger = LoggerFactory.getLogger(CartItemService.class);
 
     @Transactional
@@ -41,15 +44,17 @@ public class CartItemService implements ICartItemService{
         Cart cart = cartService.getCart(cartId);
         ProductDto productDto = iProductService.getProductById(productId);
 
+        logger.info("productDto: {}", productDto);
+
         // Find existing CartItem in the cart
         CartItem cartItem = cart.getItems()
                 .stream()
-                .filter(item -> item.getProduct().getId() == productId)
+                .filter(item -> Objects.equals(item.getProduct().getId(), productId))
                 .findFirst()
                 .orElseGet(() -> {
                     CartItem newCartItem = new CartItem();
                     newCartItem.setCart(cart);
-                    newCartItem.setProduct(mapper.map(productDto, Product.class));
+                    newCartItem.setProduct(productMapper.productDtoToEntity(productDto));
                     return newCartItem;
                 });
 
@@ -132,7 +137,7 @@ public class CartItemService implements ICartItemService{
         Cart cart = cartService.getCart(cartId);
         return cart.getItems()
                 .stream()
-                .filter(item -> item.getProduct().getId() == productId)
+                .filter(item -> Objects.equals(item.getProduct().getId(), productId))
                 .findFirst()
                 .orElseThrow(()->new ResourceNotFoundException("Item not found!"));
     }

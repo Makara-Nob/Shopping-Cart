@@ -86,7 +86,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
         productService.deleteProduct(productId);
         ApiResponse response = new ApiResponse("success", "Product deleted successfully", null);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 
     /**

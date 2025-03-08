@@ -1,6 +1,7 @@
 package com.Myproject.ShoppingCart.Service.product;
 
 import com.Myproject.ShoppingCart.Models.Product;
+import com.Myproject.ShoppingCart.Pagination.PaginationResponse;
 import com.Myproject.ShoppingCart.Pagination.ProductResponse;
 import com.Myproject.ShoppingCart.Request.AddProductRequest;
 import com.Myproject.ShoppingCart.Request.ProductUpdateRequest;
@@ -17,5 +18,4 @@ public interface IProductService {
     ProductDto updateProduct(ProductUpdateRequest request, Long id);
     void deleteProduct(Long id);
     Long countProductByBrandAndName(String brand, String name);
-    ProductDto convertToDto(Product product);
 }

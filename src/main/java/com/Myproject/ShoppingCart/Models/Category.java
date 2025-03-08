@@ -6,8 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -28,14 +26,6 @@ public class Category {
     @JsonIgnore
     @OneToMany(mappedBy = "category")
     private List<Product> products;
-
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parentId")
-    private Category parent;
-
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    private List<Category> subCategories = new ArrayList<>();
 
     public Category(String name) {
         this.name = name;

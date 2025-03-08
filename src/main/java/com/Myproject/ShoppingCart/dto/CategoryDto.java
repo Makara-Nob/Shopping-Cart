@@ -14,8 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryDto {
-    private Long id;
+    private Long categoryId;
     private String name;
-    private Long parent;
-    private List<CategoryDto> subCategories = new ArrayList<>();
 }
